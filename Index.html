@@ -2,134 +2,145 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Type Tester – Oniria</title>
-  <style>
-    @font-face {
-      font-family: 'OniriaVF';
-      src: url('https://juanluort.github.io/oniriaVF/JUANLU-TIPOG.woff2') format('woff2');
-      font-weight: 1 1000;
-    }
-
-    body {
-      font-family: sans-serif;
-      background: #f3f3f3;
-      padding: 2rem;
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2rem;
-      margin-bottom: 2rem;
-      align-items: center;
-    }
-
-    .controls label {
-      font-size: 0.9rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .tester {
-      font-family: 'OniriaVF', serif;
-      font-variation-settings: "wght" 400;
-      font-size: 48px;
-      line-height: 1.2;
-      background: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-      transition: all 0.2s ease;
-    }
-
-    input[type="range"], select, input[type="text"] {
-      font-size: 1rem;
-      padding: 0.4rem 0.6rem;
-    }
-
-    input[type="range"] {
-      width: 200px;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gym Tracker V2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-zinc-950 text-white min-h-screen p-6">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-5xl font-bold mb-2">Gym Tracker V2</h1>
+    <p class="text-zinc-400 mb-8">
+      Guarda pesos, reps e historial automáticamente.
+    </p>
 
-  <h1>Oniria Type Tester</h1>
-
-  <div class="controls">
-    <label>
-      Texto:
-      <input type="text" id="text-input" value="Tradition meets precision.">
-    </label>
-
-    <label>
-      Tamaño:
-      <input type="range" id="size-slider" min="16" max="200" value="48">
-      <span id="size-value">48</span> px
-    </label>
-
-    <label>
-      Peso:
-      <input type="range" id="weight-slider" min="1" max="1000" value="400">
-      <span id="weight-value">400</span>
-    </label>
-
-    <label>
-      Estilo rápido:
-      <select id="preset-weight">
-        <option value="0">Variable</option>
-        <option value="300">Light</option>
-        <option value="400" selected>Regular</option>
-        <option value="600">Semibold</option>
-        <option value="700">Bold</option>
-        <option value="900">Black</option>
-      </select>
-    </label>
+    <div id="app"></div>
   </div>
 
-  <div class="tester" id="tester">Tradition meets precision.</div>
-
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const tester = document.getElementById('tester');
-      const textInput = document.getElementById('text-input');
-      const sizeSlider = document.getElementById('size-slider');
-      const weightSlider = document.getElementById('weight-slider');
-      const presetWeight = document.getElementById('preset-weight');
-      const sizeValue = document.getElementById('size-value');
-      const weightValue = document.getElementById('weight-value');
+    const routine = {
+      "Día 1: Pecho-Hombro-Tríceps": [
+        { name: "Press banca", reps: [10, 6, 6, 10] },
+        { name: "Press militar", reps: [10, 8, 8, 10] },
+        { name: "Press inclinado mancuernas", reps: [8, 8, 8] },
+        { name: "Elevaciones laterales", reps: [10, 10, 10] },
+        { name: "Extensión tríceps", reps: [12, 12] },
+        { name: "Tríceps Katana", reps: [12, 12] },
+      ],
+      "Día 2: Espalda-Bíceps": [
+        { name: "Jalón pecho", reps: [8, 8, 8] },
+        { name: "Remo Gironda", reps: [8, 8, 8] },
+        { name: "Curl barra Z", reps: [10, 8, 10] },
+        { name: "Jalón unilateral", reps: [10, 10] },
+        { name: "Remo abierto", reps: [10, 10] },
+      ],
+      "Día 3: Frecuencia 2": [
+        { name: "Aperturas pecho", reps: [10, 8, 8] },
+        { name: "Elevaciones laterales mancuerna", reps: [12, 12, 12] },
+        { name: "Jalón cerrado", reps: [10, 8, 8] },
+        { name: "Press inclinado", reps: [10, 10, 10] },
+        { name: "Curl Bayesian", reps: [10, 10] },
+        { name: "Face Pull + Extensión tríceps", reps: [12, 12] },
+      ]
+    };
 
-      // Cambiar texto
-      textInput.addEventListener('input', () => {
-        tester.textContent = textInput.value;
+    const app = document.getElementById("app");
+
+    function getData() {
+      return JSON.parse(localStorage.getItem("gymTracker")) || {};
+    }
+
+    function saveData(data) {
+      localStorage.setItem("gymTracker", JSON.stringify(data));
+    }
+
+    function saveWeight(day, exercise, setIndex, value) {
+      const data = getData();
+
+      if (!data[day]) data[day] = {};
+      if (!data[day][exercise]) data[day][exercise] = {};
+
+      data[day][exercise][setIndex] = {
+        weight: value,
+        date: new Date().toLocaleDateString()
+      };
+
+      saveData(data);
+    }
+
+    function render() {
+      const data = getData();
+
+      app.innerHTML = "";
+
+      Object.entries(routine).forEach(([day, exercises]) => {
+        const dayCard = document.createElement("div");
+        dayCard.className = "bg-zinc-900 border border-zinc-800 rounded-3xl p-6 mb-8 shadow-xl";
+
+        dayCard.innerHTML = `
+          <h2 class="text-3xl font-bold mb-6">${day}</h2>
+        `;
+
+        exercises.forEach(exercise => {
+          const exerciseCard = document.createElement("div");
+          exerciseCard.className = "bg-zinc-950 border border-zinc-800 rounded-2xl p-5 mb-5";
+
+          let setsHTML = "";
+
+          exercise.reps.forEach((rep, index) => {
+            const saved = data?.[day]?.[exercise.name]?.[index] || {};
+
+            setsHTML += `
+              <div class="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+                <p class="text-zinc-400 text-sm mb-1">Serie ${index + 1}</p>
+                <p class="font-semibold mb-3">Objetivo: ${rep} reps</p>
+
+                <input
+                  type="number"
+                  step="0.5"
+                  placeholder="Peso (kg)"
+                  value="${saved.weight || ""}"
+                  class="weight-input w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 outline-none focus:border-white"
+                  data-day="${day}"
+                  data-exercise="${exercise.name}"
+                  data-set="${index}"
+                />
+
+                <div class="mt-3 text-xs text-zinc-500">
+                  Último registro:<br>
+                  ${saved.weight ? saved.weight + " kg" : "Sin datos"}<br>
+                  ${saved.date || ""}
+                </div>
+              </div>
+            `;
+          });
+
+          exerciseCard.innerHTML = `
+            <h3 class="text-2xl font-semibold mb-4">${exercise.name}</h3>
+            <div class="grid md:grid-cols-4 gap-4">
+              ${setsHTML}
+            </div>
+          `;
+
+          dayCard.appendChild(exerciseCard);
+        });
+
+        app.appendChild(dayCard);
       });
 
-      // Cambiar tamaño
-      sizeSlider.addEventListener('input', () => {
-        const size = sizeSlider.value;
-        tester.style.fontSize = `${size}px`;
-        sizeValue.textContent = size;
-      });
+      document.querySelectorAll(".weight-input").forEach(input => {
+        input.addEventListener("input", e => {
+          const day = e.target.dataset.day;
+          const exercise = e.target.dataset.exercise;
+          const setIndex = e.target.dataset.set;
+          const value = e.target.value;
 
-      // Cambiar peso por slider
-      weightSlider.addEventListener('input', () => {
-        const weight = weightSlider.value;
-        tester.style.fontVariationSettings = `"wght" ${weight}`;
-        weightValue.textContent = weight;
-        presetWeight.value = 0; // Desactiva el preset si se mueve el slider
+          saveWeight(day, exercise, setIndex, value);
+          render();
+        });
       });
+    }
 
-      // Cambiar peso por preset
-      presetWeight.addEventListener('change', () => {
-        const weight = presetWeight.value;
-        if (weight == 0) return; // "Variable"
-        weightSlider.value = weight;
-        tester.style.fontVariationSettings = `"wght" ${weight}`;
-        weightValue.textContent = weight;
-      });
-    });
+    render();
   </script>
-
 </body>
 </html>
